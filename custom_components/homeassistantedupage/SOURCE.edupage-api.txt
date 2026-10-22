@@ -1,0 +1,4 @@
+Modified edupage-api 0.13.4.dev2026102201, GPL-3.0-or-later.
+Corresponding source: release asset edupage_api-0.13.4.dev2026102201.tar.gz
+https://github.com/michalmedvecky/homeassistantedupage/releases/tag/v0.11.2.dev2026102201
+Upstream: https://github.com/EdupageAPI/edupage-api

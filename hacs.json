@@ -1,7 +1,7 @@
 {
-    "name": "EduPage",
-    "content_in_root": false,
-    "country": "DE",
-    "homeassistant": "2023.11.0",
-    "render_readme": true
-  }
+  "name": "EduPage (development)",
+  "zip_release": true,
+  "filename": "homeassistantedupage.zip",
+  "hide_default_branch": true,
+  "homeassistant": "2026.10.0"
+}

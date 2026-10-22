@@ -1,3 +1,20 @@
+# EduPage development fork
+
+Temporary development fork of [rine77/homeassistantedupage](https://github.com/rine77/homeassistantedupage).
+For HACS, add `michalmedvecky/homeassistantedupage` as a custom integration repository
+and choose the published pre-release. Domain `homeassistantedupage` and config/entity
+identifiers are unchanged. Do not delete the child configuration entries.
+
+This release embeds edupage-api 0.13.4.dev2026102201 as a wheel. Its corresponding
+source archive is attached to the same GitHub release; PyPI is not used for this
+development dependency. All source changes are separately prepared for the original
+library and integration projects. Real booking/cancellation remains unverified;
+use dry_run for testing. Explicit booking/cancellation buttons perform real writes.
+
+The wheel path targets Home Assistant OS's `/config` directory. The HACS release
+asset `homeassistantedupage.zip` contains the complete integration including `_wheels`.
+If your config directory is elsewhere, use a build with that directory configured.
+
 <p align="center">
   <img src="custom_components/homeassistantedupage/brand/icon@2x.png" alt="EduPage for Home Assistant" width="160">
 </p>
