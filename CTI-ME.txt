@@ -1,7 +1,20 @@
-EduPage pro Home Assistant OS — dev 7 (24. 10. 2026)
-Integrace: 0.11.2.dev2026102401
+EduPage pro Home Assistant OS — dev 8 (24. 10. 2026)
+Integrace: 0.11.2.dev2026102402
 Knihovna: 0.13.4.dev2026102201
 Konfigurační cesta: /config
+
+OPRAVY DEV 8 PO DALŠÍM UPSTREAM REVIEW
+- Při selhání celého koordinátoru je grades_complete neznámé (null),
+  i když zachovaná starší data uvádějí kompletní načtení. Po úspěšném
+  obnovení se hodnota opět ověří. Platí pro aktuální i pololetní známky.
+- Volba převodu písmen výslovně uvádí, že zapíná vážení všech známek,
+  včetně číselných. Při vypnutí zůstávají číselné průměry aritmetické.
+  Popisek i vysvětlení jsou ve všech šesti podporovaných jazycích.
+- Vyhledávání zařízení používá nové API, pokud existuje. Starší cesta
+  ověřuje příslušnost ke konfiguraci dítěte. Minimum se nezvyšuje;
+  zůstává původně deklarovaných 2023.11.0. Celá sada je ověřena na
+  HA 2026.10.1 a 2026.10.2, starší API cílenými testy kompatibility.
+- Knihovna se nemění: 0.13.4.dev2026102201, shodný wheel a SHA256.
 
 OPRAVY DEV 7 PO UPSTREAM REVIEW
 - Zrušení služby neuvolní sdílený zámek, dokud běžící operace a obnova
@@ -25,7 +38,8 @@ OPRAVY DEV 6
 - Testuje se serializace celého formuláře pro frontend, včetně převodu A–F,
   výběru předmětů a filtru konzultací. Neplatná čísla se neukládají.
 - Registr zařízení používá async_get_device_by_identifier s entry_id.
-- Minimální HA pro nové API registru zařízení je 2026.10.0.
+- Původní požadavek dev 6 na HA 2026.10 byl v dev 8 odstraněn
+  přidáním kompatibilního vyhledávání zařízení.
 - Knihovna je beze změny proti dev 5: 0.13.4.dev2026102201, stejný wheel i hash.
 - Uživatel na dev 5 potvrdil 13/13 známek včetně původně chybějícího hodnocení a zachování existující
   skutečné rezervace přes upgrade. Skutečné rušení není ověřené; otevřená
@@ -60,7 +74,7 @@ Atribut grade_average_converted označuje průměr zahrnující převedené pís
 Hodnoty původních známek zůstávají písmena, převod se týká jen průměru.
 
 INSTALACE RUČNĚ
-Zálohuj složku integrace. ZIP homeassistantedupage-0.11.2.dev2026102401.zip
+Zálohuj složku integrace. ZIP homeassistantedupage-0.11.2.dev2026102402.zip
 rozbal do konfigurační složky HA; nahraď celou složku
 custom_components/homeassistantedupage včetně _wheels. Restartuj celý HA.
 Domain a identifikátory entit se nemění. Konfigurace dětí se znovu nezakládá.
