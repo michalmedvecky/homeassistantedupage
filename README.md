@@ -5,7 +5,7 @@ For HACS, add `michalmedvecky/homeassistantedupage` as a custom integration repo
 and choose the published pre-release. Domain `homeassistantedupage` and config/entity
 identifiers are unchanged. Do not delete the child configuration entries.
 
-This release embeds edupage-api 0.13.4.dev2026111002 as a wheel. Its corresponding
+This release embeds edupage-api 0.13.4.dev2026111003 as a wheel. Its corresponding
 source archive is attached to the same GitHub release; PyPI is not used for this
 development dependency. All source changes are separately prepared for the original
 library and integration projects. Real booking/cancellation remains unverified;

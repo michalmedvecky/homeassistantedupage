@@ -1,41 +1,44 @@
-EduPage pro Home Assistant OS — dev 10
-Integrace: 0.12.1.dev2026111002
-Knihovna: 0.13.4.dev2026111002
+EduPage dev 11 — diagnostický build
+Integrace: 0.12.1.dev2026111003
+Knihovna: 0.13.4.dev2026111003
 Konfigurační cesta: /config
 
-OPRAVA REGRESE DEV 9
-Dodaný log ukázal chybu rozvrhu (RPC r=null) a až poté požadavek na reauth.
-Log neobsahoval selhání návratu do rodiče, takže toto nebylo prokázanou
-příčinou smyčky. Přesný původ pozdějšího auth signálu ve starém logu chybí.
+ÚČEL
+Výpis dev 10 ukázal první selhání návratu do rodiče v 15:21:07.568,
+po něm blokaci ostatních zdrojů a až následně chyby obnovy session.
+Důvod původního UnknownServerError v dostupném logu není.
+Tento build doplňuje diagnostiku. Nemění přepínací protokol, neobchází
+pojistku kontextu a neslibuje opravu samotného serverového selhání.
 
-- Parser kontroluje RPC odpověď před .get() a zachovává MissingDataException.
-- Při chybějících datech rozvrhu se provede nejvýše jedno další čtení
-  v ověřeném kontextu vybraného dítěte. Další neúspěch je chyba dat, ne hesla.
-- Pole pro heslo v přihlášené stránce ani /login v query parametru neznačí
-  expiraci. Kontroluje se skutečná cesta přesměrování modulu.
-- Pokud modul hlásí expiraci, provede se nezapisující ověření /user/
-  se současnými cookies. Při platné nebo neověřené hlavní session je chyba
-  omezena na zdroj dat; nevyžádá se opakovaně heslo.
-- Skutečné přesměrování hlavního účtu na login / HTTP 401 stále vede k reauth.
-- Chyba obnovy rodičovského kontextu sama nevyvolává reauth. Ověřená data
-  se zachovávají a nejistý kontext nadále blokuje další požadavky/zápisy.
-- Diagnostika uvádí operaci, typ chyby a výsledek ověření session, nikoli
-  payloady, cookies, hesla nebo gsec_hash. Potlačené řetězce se znovu nelogují.
+DIAGNOSTIKA
+- Původní typy výjimek a soubory/funkce/řádky před potlačením výjimky.
+- Entry_id, student_id a operace, po které selhal návrat do rodiče.
+- Session-load start, úspěšné načtení /user, začátek obnovy kontextu.
+- SDK: metoda a pevný endpoint, zdroj volby identity a počty kandidátů;
+  HTTP status, kategorie konečné adresy, stavy přesměrování, MIME, délka
+  odpovědi a booleany přítomnosti bootstrapu, hash pole a login chyby.
+- Nikdy cookies, hodnoty rid, hesla, gsec_hash, plné URL/query, těla
+  odpovědí, lokální proměnné ani libovolné zprávy vnořených výjimek.
 
-INSTALACE
-V HACS zvol předběžnou verzi 0.12.1.dev2026111002 a restartuj celý HA.
-Konfigurace dětí nemaž. Ověř načtení obou entries bez reauth smyčky.
-Pokud session skutečně vypršela, dokonči Znovu ověřit u příslušného dítěte.
-Ruční ZIP homeassistantedupage-0.12.1.dev2026111002.zip patří do /config.
-HACS asset homeassistantedupage.zip obsahuje integraci v kořeni.
-Knihovna je přibalená jako wheel; odpovídající GPL zdroj je release .tar.gz.
-PyPI se nepoužívá. Domain a identifikátory entit zůstávají stejné.
+POSTUP PRO HA AGENTA
+1. Nainstaluj HACS pre-release 0.12.1.dev2026111003 a restartuj HA.
+   Konfigurace dětí nemaž, hesla ani session ručně neupravuj.
+2. Zapni přes logger.set_level pouze tyto loggery na debug:
+   custom_components.homeassistantedupage
+   edupage_api.login_session
+   edupage_api.parent
+3. Po zapnutí debug znovu načti obě konfigurace EduPage, aby se zaznamenal
+   první pokus s čerstvým wrapperem, ne jen další recovery z chyby.
+   Nespouštěj reauth, rezervace, rušení ani jiné zapisující služby.
+4. Vyber chronologický výřez od Session load begin přes session_reload
+   a parent_switch až po první parent_context_restoration/recovery stack.
+   Zachovej celé víceřádkové stacky. Stačí přibližně 2 minuty.
+5. Vrať tyto loggery na původní úroveň. Jména/entry_id/student_id anonymizuj
+   konzistentně, zachovej HTTP statusy, kategorické hodnoty a počty.
+   Znovu zkontroluj, že výstup neobsahuje žádná autentizační tajemství.
 
-Pokud rozvrh zůstane nedostupný, pošli konkrétní nové řádky Timetable RPC,
-Failed to fetch timetable a případný auth signál s výsledkem ověření účtu.
-Nezapínej kvůli tomu plošný debug a neposílej cookies ani celé odpovědi API.
-
-Nové chování má regresní testy; potvrzení na původním živém účtu teprve
-proběhne. Přesnou příčinu původního r=null samotný traceback neprokazuje.
-Skutečné rušení rezervace a otevřený průzkum zůstávají živě neověřené.
-Pro zkoušky služeb používej dry_run:true; tlačítka rezervace/rušení zapisují.
+HACS repo: https://github.com/michalmedvecky/homeassistantedupage
+Ruční ZIP homeassistantedupage-0.12.1.dev2026111003.zip patří do /config.
+Domain a entity se nemění. Přibalený wheel a odpovídající GPL zdroj jsou
+v release, PyPI se nepoužívá. Skutečné rušení a otevřené přihlašování
+zůstávají živě neověřené; tento build je určen ke sběru diagnostiky.
