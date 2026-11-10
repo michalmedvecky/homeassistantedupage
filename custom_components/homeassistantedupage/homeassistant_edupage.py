@@ -113,28 +113,10 @@ class Edupage:
             getattr(self, "entry_id", None), getattr(self, "student_id", None), getattr(self, "context_invalid", False),
             bool(getattr(self.api, "gsec_hash", None)),
         )
-        if getattr(self, "context_invalid", False):
-            # A new /user response and server-issued account row are available.
-            try:
-                self.api.switch_to_parent()
-            except RequestException as exc:
-                log_exception(_LOGGER, "parent_context_recovery", exc,
-                              entry_id=getattr(self, "entry_id", None), student_id=getattr(self, "student_id", None))
-                raise UpdateFailed("EduPage context recovery is temporarily unavailable") from None
-            except ConfigEntryAuthFailed:
-                raise
-            except (ExpiredSessionException, NotLoggedInException, BadCredentialsException):
-                raise
-            except Exception as exc:
-                log_exception(_LOGGER, "parent_context_recovery", exc,
-                              entry_id=getattr(self, "entry_id", None), student_id=getattr(self, "student_id", None))
-                # /user authenticated successfully. A failed account switch is
-                # a context/protocol failure, not evidence that credentials expired.
-                raise UpdateFailed(
-                    f"EduPage parent context recovery failed ({type(exc).__name__}); "
-                    "session reload succeeded"
-                ) from None
-            self.context_invalid = False
+        # Selecting a child does not leave the parent account. A successful
+        # authenticated bootstrap recovers the session without an account switch.
+        self.api._selected_child_id = None
+        self.context_invalid = False
 
     async def logout(self):
         """Invalidate the session on the EduPage server.
@@ -215,26 +197,21 @@ class Edupage:
 
     @contextmanager
     def _child_context(self, student, operation="unknown"):
-        """Select only a verified child; quarantine failed cleanup until recovery."""
-        switched = False
-        try:
-            if student is not None:
-                try:
-                    self.api.switch_to_child(student)
-                    switched = True
-                except NotParentException:
-                    pass
-            yield
-        finally:
-            if switched:
-                try:
-                    self.api.switch_to_parent()
-                except Exception as exc:
-                    self.context_invalid = True
-                    # Do not replace a successful result or the primary exception.
-                    # No more API reads/writes are allowed until login recovers it.
-                    log_exception(_LOGGER, f"parent_context_restoration/{operation}", exc,
-                                  entry_id=getattr(self, "entry_id", None), student_id=getattr(self, "student_id", None))
+        """Select the target child inside the parent account for each operation.
+
+        The caller holds the session lock until the executor finishes. Never
+        restore via edupageChange: that switches accounts, not child selection.
+        """
+        if student is not None:
+            try:
+                self.api.switch_to_child(student)
+            except NotParentException:
+                pass
+            except Exception:
+                # A failed selection must never continue with the previous child.
+                self.context_invalid = True
+                raise
+        yield
 
 
     def _grade_read(self, student, method, *args):

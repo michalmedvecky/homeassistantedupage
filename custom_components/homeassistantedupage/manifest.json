@@ -13,5 +13,5 @@
         "edupage-api@file:///config/custom_components/homeassistantedupage/_wheels/edupage_api-0.13.4.dev2026111003-py3-none-any.whl#sha256=1f355a151335a8b5e603693f2d54264d039a964ef503d98d5601e1070934ac7d",
         "unidecode"
     ],
-    "version": "0.12.1.dev2026111003"
+    "version": "0.12.1.dev2026111004"
 }
