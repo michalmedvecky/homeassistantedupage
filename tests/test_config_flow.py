@@ -192,7 +192,7 @@ async def test_reauth_success_aborts_and_reloads_entry(hass: HomeAssistant, conf
     # The reload-and-abort path was actually invoked.
     assert recorded == {
         "entry_id": entry_id,
-        "data_updates": {CONF_PHPSESSID: "phpsess_123"},
+        "data_updates": {CONF_PHPSESSID: "phpsess_123", "username": "user", "subdomain": "mshviezdoslavova1"},
         "reason": "reauth_successful",
     }
 
@@ -309,18 +309,6 @@ async def test_options_update_listener_reloads_entry(
 
     reload_mock.assert_awaited_once_with(config_entry.entry_id)
 
-async def test_options_flow_stores_custom_letter_conversion(hass, config_entry):
-    coordinator = MagicMock()
-    coordinator.data = {"subjects": []}
-    hass.data[DOMAIN][config_entry.entry_id] = coordinator
-    result = await hass.config_entries.options.async_init(config_entry.entry_id)
-    result = await hass.config_entries.options.async_configure(result["flow_id"], {
-        CONF_SUBJECT_IDS: [], "convert_letter_grades": True, "letter_grade_f": 6,
-    })
-    assert result["type"] is data_entry_flow.FlowResultType.CREATE_ENTRY
-    assert config_entry.options["convert_letter_grades"] is True
-    assert config_entry.options["letter_grade_a"] == 1
-    assert config_entry.options["letter_grade_f"] == 6
 
 
 async def test_options_form_schema_serializes_for_frontend(hass, config_entry):
@@ -356,6 +344,37 @@ async def test_options_form_uses_current_ha_serializer(hass, config_entry):
     result = await hass.config_entries.options.async_init(config_entry.entry_id)
     fields = probatio.to_field_list(result["data_schema"], custom_serializer=cv.custom_serializer)
     assert len(fields) == 10
+
+
+async def test_reconfigure_rejects_account_without_configured_child(hass, config_entry):
+    api = _api_logged_in()
+    api.get_students.return_value = [SimpleNamespace(person_id=999)]
+    old_data = dict(config_entry.data)
+    with patch("custom_components.homeassistantedupage.config_flow.Edupage", return_value=api):
+        form = await hass.config_entries.flow.async_init(
+            DOMAIN, context={"source": config_entries.SOURCE_RECONFIGURE, "entry_id": config_entry.entry_id},
+        )
+        result = await hass.config_entries.flow.async_configure(form["flow_id"], {
+            "username": "other-parent", "password": "pw", "subdomain": "other-school",
+        })
+    assert result["type"] is data_entry_flow.FlowResultType.FORM
+    assert result["errors"] == {"base": "invalid_auth"}
+    assert dict(config_entry.data) == old_data
+
+
+async def test_options_flow_stores_custom_letter_conversion(hass, config_entry):
+    coordinator = MagicMock()
+    coordinator.data = {"subjects": []}
+    hass.data[DOMAIN][config_entry.entry_id] = coordinator
+    result = await hass.config_entries.options.async_init(config_entry.entry_id)
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {
+        CONF_SUBJECT_IDS: [], "convert_letter_grades": True, "letter_grade_f": 6,
+    })
+    assert result["type"] is data_entry_flow.FlowResultType.CREATE_ENTRY
+    assert config_entry.options["convert_letter_grades"] is True
+    assert config_entry.options["letter_grade_a"] == 1
+    assert config_entry.options["letter_grade_f"] == 6
+
 
 
 @pytest.mark.parametrize("value", [float("nan"), float("inf")])

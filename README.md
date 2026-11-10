@@ -5,7 +5,7 @@ For HACS, add `michalmedvecky/homeassistantedupage` as a custom integration repo
 and choose the published pre-release. Domain `homeassistantedupage` and config/entity
 identifiers are unchanged. Do not delete the child configuration entries.
 
-This release embeds edupage-api 0.13.4.dev2026102201 as a wheel. Its corresponding
+This release embeds edupage-api 0.13.4.dev2026111001 as a wheel. Its corresponding
 source archive is attached to the same GitHub release; PyPI is not used for this
 development dependency. All source changes are separately prepared for the original
 library and integration projects. Real booking/cancellation remains unverified;
@@ -43,7 +43,7 @@ The integration is based on the [edupage-api](https://github.com/EdupageAPI/edup
 - Configurable per-subject grade sensors
 - Notification sensor covering all available EduPage event types
 - Event entity for automation-friendly new grade, homework, message, exam,
-  timetable-change, and school-arrival events
+  timetable-change, school-arrival, and behaviour-note events
 - Read-only homework to-do list with deadlines and completion status
 - Summary sensors for open and overdue homework, the next deadline, and
   upcoming exams
@@ -125,7 +125,7 @@ The exact entity IDs are assigned by Home Assistant and may differ from the exam
 | Assignments calendar | Current or next assignment | Homework deadlines and exams as all-day events |
 | Subject sensor | Number of grades | Grade details in attributes |
 | Notification sensor | Number of notifications | Structured events, event counts, and legacy flat attributes |
-| Event entity | Timestamp of the latest supported event | New grade, homework, message, exam, timetable-change, and arrival events |
+| Event entity | Timestamp of the latest supported event | New grade, homework, message, exam, timetable-change, arrival, and behaviour-note events |
 | Homework to-do list | Number of incomplete homework items | Native read-only to-do items with deadlines and completion status |
 | Open-homework sensor | Number of incomplete homework items | Includes dated and undated homework |
 | Overdue-homework sensor | Number of overdue homework items | Incomplete homework with a deadline before today |
@@ -386,6 +386,7 @@ Supported Home Assistant event types are:
 - `new_exam`
 - `timetable_change`
 - `arrival_at_school`
+- `new_note` (behaviour note: praise or reprimand, EduPage "Včielka")
 
 Example automation trigger:
 
@@ -415,6 +416,21 @@ available, including the grade, percentage, maximum points, class average,
 title, comment, and teacher. EduPage uses different identifiers for timeline
 events and grades; the integration resolves both direct and nested references
 before attaching these attributes.
+
+Behaviour notes (EduPage timeline type `vcelicka`, praise and reprimands) carry
+no free text. New-note events and the notification sensor expose the note
+category as `note_label` (for example *Nerešpektuje pokyny učiteľa*) and the
+raw category code as `note_type`; `text` falls back to the label. In the
+notification sensor both fields are also available as legacy flat attributes
+(`event_N_note_label`, `event_N_note_type`) and are omitted when EduPage does
+not provide them.
+
+Because a behaviour note is personal and a parent account shares one timeline
+across siblings, a `new_note` event is only emitted when the note can be
+reliably attributed to the student: the recipient must match the student by
+person ID or by full name (ignoring case and accents). Notes with a missing,
+school-wide, class, group, or otherwise ambiguous recipient are not emitted.
+The notification sensor still lists every timeline item, unchanged.
 
 There is currently no dedicated EduPage dashboard card. Home Assistant's standard calendar, entity, Markdown, and template cards can be used instead.
 
@@ -787,3 +803,18 @@ The background read preserves existing grades, uses the shared session lock and
 is cancelled on unload. An in-progress child read completes restoration before
 releasing that lock. Timetable/grade source work can still take more than ten
 seconds; this change only removes consultation slot requests from startup.
+
+
+### Expired sessions and account context
+
+Expired sessions use Home Assistant reauthentication and stop further network
+requests until the entry is reauthenticated. The reauth step treats initial HA
+entry data as context, not a password submission. Passwords are requested again
+and are never stored. Transient network errors remain retryable.
+
+Reconfigure validates the configured child before updating the session and account
+identity together. Reload waits for startup consultation work to restore its
+context before loading the replacement entry. Failed parent restoration preserves
+verified read results, quarantines further requests, and offers reauthentication;
+no reservation is automatically retried. The SDK prefers a server-issued parent
+account row when available, including canonical identities behind login aliases.

@@ -1,102 +1,50 @@
-EduPage pro Home Assistant OS — dev 8 (24. 10. 2026)
-Integrace: 0.11.2.dev2026102402
-Knihovna: 0.13.4.dev2026102201
+EduPage pro Home Assistant OS — dev 9 (10. 11. 2026)
+Integrace: 0.12.1.dev2026111001
+Knihovna: 0.13.4.dev2026111001
 Konfigurační cesta: /config
 
-OPRAVY DEV 8 PO DALŠÍM UPSTREAM REVIEW
-- Při selhání celého koordinátoru je grades_complete neznámé (null),
-  i když zachovaná starší data uvádějí kompletní načtení. Po úspěšném
-  obnovení se hodnota opět ověří. Platí pro aktuální i pololetní známky.
-- Volba převodu písmen výslovně uvádí, že zapíná vážení všech známek,
-  včetně číselných. Při vypnutí zůstávají číselné průměry aritmetické.
-  Popisek i vysvětlení jsou ve všech šesti podporovaných jazycích.
-- Vyhledávání zařízení používá nové API, pokud existuje. Starší cesta
-  ověřuje příslušnost ke konfiguraci dítěte. Minimum se nezvyšuje;
-  zůstává původně deklarovaných 2023.11.0. Celá sada je ověřena na
-  HA 2026.10.1 a 2026.10.2, starší API cílenými testy kompatibility.
-- Knihovna se nemění: 0.13.4.dev2026102201, shodný wheel a SHA256.
+OPRAVY Z PROVOZU
+- Vypršení session spustí skutečný reauth flow v HA. Další požadavky se
+  zablokují do obnovení přihlášení. Výpadek sítě zůstává přechodnou chybou.
+- Opraven vstup do reauth: HA předává uložená data konfigurace bez hesla;
+  tato data se již nezpracovávají jako odeslaný přihlašovací formulář.
+- Reconfigure uloží login, školu a novou session společně, až po ověření,
+  že účet obsahuje nakonfigurované dítě. Heslo se neukládá.
+- Reload počká na doběhnutí konzultační úlohy a obnovení kontextu.
+  Unload callback nevrací výsledek Task.cancel(); nevzniká chyba s True.
+- Neúspěšný návrat do rodiče nepřepíše původní chybu ani ověřená data.
+  Session se označí jako nejistá a další požadavky včetně rezervací jsou
+  zablokované do ověřené obnovy. Zápisy se automaticky neopakují.
+- SDK používá identifikátor rodičovského účtu ze serverové stránky, pokud
+  je dostupný. Rozlišuje alias přihlášení a kanonickou identitu, odmítá
+  nejednoznačné účty a návrat na přihlašovací stránku nehlásí jako úspěch.
 
-OPRAVY DEV 7 PO UPSTREAM REVIEW
-- Zrušení služby neuvolní sdílený zámek, dokud běžící operace a obnova
-  rodičovského kontextu neskončí. Platí i při opakovaném rušení a chybě vlákna.
-- Akce zrušená při čekání na zámek už nezačne zapisovat. Zápis se neopakuje.
-- Chyby známek mají anonymizovaný souhrn a místa v tracebacku; následný
-  traceback už nevypisuje původní neanonymizovaný řetězec výjimek.
-- Při vypnutém převodu písmen zůstávají číselné průměry aritmetické,
-  stejně jako v původní integraci. Vážený výpočet je výslovnou součástí
-  zapnutého převodu. grade_average_method uvádí arithmetic nebo weighted.
-- Doplněny překlady do všech šesti podporovaných jazyků.
-- Knihovna je beze změny: 0.13.4.dev2026102201, stejný wheel i hash.
+ZÁKLAD A ZACHOVANÉ FUNKCE
+Obsahuje aktuální upstream 0.12.0 (včetně nativní podpory 2FA a událostí
+poznámek) a všechna předchozí rozšíření konzultací, přihlašování/průzkumů,
+opravy samostatných známek i volitelný vážený převod A–F.
+Domain, konfigurace dětí a identifikátory entit zůstávají stejné.
+Deklarované minimum HA se nezvyšuje; celá sada se ověřuje na 2026.10.1/2.
 
-OPRAVY BALENÍ DEV 6.1
-- Funkční kód odpovídá dev 6. Odkaz na přibalený wheel používá zápis bez
-  mezer, který přijímá pip/HA i hassfest. HACS a manifest mají shodný název.
+INSTALACE HACS
+Vlastní repozitář: https://github.com/michalmedvecky/homeassistantedupage
+Kategorie Integrace. Povol předběžné verze a vyber 0.12.1.dev2026111001.
+Po aktualizaci restartuj HA. Konfigurace dětí nemaž ani nezakládej znovu.
 
-OPRAVY DEV 6
-- Opraven HTTP 500 při otevření Možností. Schéma používá standardní číselnou
-  validaci; vlastní kontrola hodnot běží až při odeslání.
-- Testuje se serializace celého formuláře pro frontend, včetně převodu A–F,
-  výběru předmětů a filtru konzultací. Neplatná čísla se neukládají.
-- Registr zařízení používá async_get_device_by_identifier s entry_id.
-- Původní požadavek dev 6 na HA 2026.10 byl v dev 8 odstraněn
-  přidáním kompatibilního vyhledávání zařízení.
-- Knihovna je beze změny proti dev 5: 0.13.4.dev2026102201, stejný wheel i hash.
-- Uživatel na dev 5 potvrdil 13/13 známek včetně původně chybějícího hodnocení a zachování existující
-  skutečné rezervace přes upgrade. Skutečné rušení není ověřené; otevřená
-  přihlašovací akce/průzkum nyní na škole není k dispozici pro živý test.
-
-ZAHRNUTÉ OPRAVY Z DEV 5
-- Živá data potvrdila 4 samostatné známky s udalostid=0. Parser načítá vlastní
-  znamkaid, predmetid, datum, data a ucitelid z řádku. event_id zůstane None;
-  ID známky se nezaměňuje za ID písemky ani ID oznámení.
-- Původně chybějící hodnocení je v této skupině. Na živé stránce je potvrzena
-  struktura všech 13 řádků; ověření běhu v HA musí proběhnout po instalaci.
-- Každý přeskočený řádek loguje důvod a názvy klíčů bez hodnot známek.
-- Senzory předmětů i pololetní průměry mají grades_skipped_total,
-  grades_received_total a grades_complete. Počet přeskočených řádků je za
-  celé načtení dítěte/pololetí, nikoli pouze za daný předmět (u neúplného
-  řádku nemusí být možné určit předmět). None znamená neznámé.
-- Popisky konzultací obsahují začátek–konec slotu / konec bloku a ID bloku.
-- Konzultace se při prvním startu načítají až na pozadí po startu HA.
-  Do té doby jsou nedostupné; ostatní data jsou již připravená. Sdílený
-  zámek zachovává kontext dítěte. Není zaručen celkový start pod 10 sekund.
-- Varování načítání obsahují traceback; chyby známek potlačují původní
-  řetězec výjimek a používají anonymizovaný souhrn.
-
-PÍSMENNÉ PRŮMĚRY
-Nastavení → Zařízení a služby → EduPage → Možnosti:
-Zapni „Převádět písmenné známky do průměru“ a ověř hodnoty A–F.
-Výchozí A=1, B=2, C=3, D=4, E=5, F=5; každá hodnota je upravitelná.
-Převod je ve výchozím stavu vypnutý. Při zapnutém převodu jsou průměry vážené; chybějící váha
-má hodnotu 1, nulová/záporná/neplatná váha se nepočítá.
-(NESPLNĚNO) ani jiná nenumerická hodnota mimo mapování se nepočítá.
-Atribut grade_average_converted označuje průměr zahrnující převedené písmeno.
-Hodnoty původních známek zůstávají písmena, převod se týká jen průměru.
-
-INSTALACE RUČNĚ
-Zálohuj složku integrace. ZIP homeassistantedupage-0.11.2.dev2026102402.zip
-rozbal do konfigurační složky HA; nahraď celou složku
-custom_components/homeassistantedupage včetně _wheels. Restartuj celý HA.
-Domain a identifikátory entit se nemění. Konfigurace dětí se znovu nezakládá.
-
-HACS
-Přidej jako vlastní repozitář https://github.com/michalmedvecky/homeassistantedupage
-s kategorií Integrace. Zvol vydanou předběžnou verzi. Instalační asset je
-homeassistantedupage.zip s obsahem integrace přímo v kořeni, včetně _wheels.
-Knihovna se nebere z PyPI. Zdroj knihovny je samostatný release asset .tar.gz.
-Původní upstream a fork nemají být současně spravované jako dvě různé instalace.
-Po vydání upstream změn lze změnit zdroj v HACS při zachování konfigurace dětí.
+RUČNÍ INSTALACE
+Zálohuj složku integrace. Rozbal homeassistantedupage-0.12.1.dev2026111001.zip
+do /config; nahraď celou složku custom_components/homeassistantedupage
+včetně _wheels a odstraň staré soubory, které již v balíčku nejsou.
+Knihovna je přibalená jako wheel, nepoužívá se PyPI. Odpovídající zdroj je
+v samostatném release assetu edupage_api-0.13.4.dev2026111001.tar.gz.
 
 OVĚŘENÍ PO INSTALACI
-Otevři Možnosti u obou konfigurací dětí: nesmí vzniknout HTTP 500.
-Ověř uložení převodu A–F, výběru předmětů a filtru konzultací.
-Na testovacím účtu je v dev 5 potvrzeno úplné načtení 13 známek.
-Zkontroluj grades_skipped_total=0 a grades_complete=true. V Možnostech lze
-povolit převod a ověřit průměry. Skutečné rušení není ověřené;
-služby pro zkoušku ponech dry_run:true. Tlačítka rezervace/rušení zapisují!
+Při dříve neúspěšném unload nejprve restartuj HA. U každé konfigurace dítěte
+obnov přihlášení přes Znovu ověřit / Překonfigurovat. Zkontroluj známky,
+rozvrh, přihlašování a konzultace. Nastavení a existující rezervace zachovej.
+Heslo ani session neposílej do protokolů nebo do komentářů na GitHubu.
 
-Při problému dočasně nastav loggery edupage_api.grades,
-custom_components.homeassistant_edupage a
-custom_components.homeassistantedupage.sensor na debug. Pošli pouze řádky
-Grade parser, Grade row skipped, Grade subject audit a konkrétní chybu.
-Neposílej hesla, cookies, tokeny ani celé odpovědi API.
+Fix rodičovské identity je ověřen syntetickými testy; jeho potvrzení na účtu,
+kde chyba vznikla, teprve proběhne. Skutečné rušení a otevřená přihlašovací
+akce/průzkum zůstávají živě neověřené. Pro zkoušky služeb používej dry_run:true.
+Tlačítka rezervace a rušení zapisují do EduPage.
