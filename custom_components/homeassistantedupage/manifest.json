@@ -10,8 +10,8 @@
     "iot_class": "cloud_polling",
     "issue_tracker": "https://github.com/michalmedvecky/homeassistantedupage/issues",
     "requirements": [
-        "edupage-api@file:///config/custom_components/homeassistantedupage/_wheels/edupage_api-0.13.4.dev2026111001-py3-none-any.whl#sha256=767a00fcf0084aba02145d3d16ef3d6b8bbdeeab95a89e32ce5c4e67ecd44baf",
+        "edupage-api@file:///config/custom_components/homeassistantedupage/_wheels/edupage_api-0.13.4.dev2026111002-py3-none-any.whl#sha256=08cbc64731ac7df4f656e906143a5d85793c3b318cee699622d4a1347f2a5562",
         "unidecode"
     ],
-    "version": "0.12.1.dev2026111001"
+    "version": "0.12.1.dev2026111002"
 }

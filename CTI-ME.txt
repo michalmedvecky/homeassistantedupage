@@ -1,50 +1,41 @@
-EduPage pro Home Assistant OS — dev 9 (10. 11. 2026)
-Integrace: 0.12.1.dev2026111001
-Knihovna: 0.13.4.dev2026111001
+EduPage pro Home Assistant OS — dev 10
+Integrace: 0.12.1.dev2026111002
+Knihovna: 0.13.4.dev2026111002
 Konfigurační cesta: /config
 
-OPRAVY Z PROVOZU
-- Vypršení session spustí skutečný reauth flow v HA. Další požadavky se
-  zablokují do obnovení přihlášení. Výpadek sítě zůstává přechodnou chybou.
-- Opraven vstup do reauth: HA předává uložená data konfigurace bez hesla;
-  tato data se již nezpracovávají jako odeslaný přihlašovací formulář.
-- Reconfigure uloží login, školu a novou session společně, až po ověření,
-  že účet obsahuje nakonfigurované dítě. Heslo se neukládá.
-- Reload počká na doběhnutí konzultační úlohy a obnovení kontextu.
-  Unload callback nevrací výsledek Task.cancel(); nevzniká chyba s True.
-- Neúspěšný návrat do rodiče nepřepíše původní chybu ani ověřená data.
-  Session se označí jako nejistá a další požadavky včetně rezervací jsou
-  zablokované do ověřené obnovy. Zápisy se automaticky neopakují.
-- SDK používá identifikátor rodičovského účtu ze serverové stránky, pokud
-  je dostupný. Rozlišuje alias přihlášení a kanonickou identitu, odmítá
-  nejednoznačné účty a návrat na přihlašovací stránku nehlásí jako úspěch.
+OPRAVA REGRESE DEV 9
+Dodaný log ukázal chybu rozvrhu (RPC r=null) a až poté požadavek na reauth.
+Log neobsahoval selhání návratu do rodiče, takže toto nebylo prokázanou
+příčinou smyčky. Přesný původ pozdějšího auth signálu ve starém logu chybí.
 
-ZÁKLAD A ZACHOVANÉ FUNKCE
-Obsahuje aktuální upstream 0.12.0 (včetně nativní podpory 2FA a událostí
-poznámek) a všechna předchozí rozšíření konzultací, přihlašování/průzkumů,
-opravy samostatných známek i volitelný vážený převod A–F.
-Domain, konfigurace dětí a identifikátory entit zůstávají stejné.
-Deklarované minimum HA se nezvyšuje; celá sada se ověřuje na 2026.10.1/2.
+- Parser kontroluje RPC odpověď před .get() a zachovává MissingDataException.
+- Při chybějících datech rozvrhu se provede nejvýše jedno další čtení
+  v ověřeném kontextu vybraného dítěte. Další neúspěch je chyba dat, ne hesla.
+- Pole pro heslo v přihlášené stránce ani /login v query parametru neznačí
+  expiraci. Kontroluje se skutečná cesta přesměrování modulu.
+- Pokud modul hlásí expiraci, provede se nezapisující ověření /user/
+  se současnými cookies. Při platné nebo neověřené hlavní session je chyba
+  omezena na zdroj dat; nevyžádá se opakovaně heslo.
+- Skutečné přesměrování hlavního účtu na login / HTTP 401 stále vede k reauth.
+- Chyba obnovy rodičovského kontextu sama nevyvolává reauth. Ověřená data
+  se zachovávají a nejistý kontext nadále blokuje další požadavky/zápisy.
+- Diagnostika uvádí operaci, typ chyby a výsledek ověření session, nikoli
+  payloady, cookies, hesla nebo gsec_hash. Potlačené řetězce se znovu nelogují.
 
-INSTALACE HACS
-Vlastní repozitář: https://github.com/michalmedvecky/homeassistantedupage
-Kategorie Integrace. Povol předběžné verze a vyber 0.12.1.dev2026111001.
-Po aktualizaci restartuj HA. Konfigurace dětí nemaž ani nezakládej znovu.
+INSTALACE
+V HACS zvol předběžnou verzi 0.12.1.dev2026111002 a restartuj celý HA.
+Konfigurace dětí nemaž. Ověř načtení obou entries bez reauth smyčky.
+Pokud session skutečně vypršela, dokonči Znovu ověřit u příslušného dítěte.
+Ruční ZIP homeassistantedupage-0.12.1.dev2026111002.zip patří do /config.
+HACS asset homeassistantedupage.zip obsahuje integraci v kořeni.
+Knihovna je přibalená jako wheel; odpovídající GPL zdroj je release .tar.gz.
+PyPI se nepoužívá. Domain a identifikátory entit zůstávají stejné.
 
-RUČNÍ INSTALACE
-Zálohuj složku integrace. Rozbal homeassistantedupage-0.12.1.dev2026111001.zip
-do /config; nahraď celou složku custom_components/homeassistantedupage
-včetně _wheels a odstraň staré soubory, které již v balíčku nejsou.
-Knihovna je přibalená jako wheel, nepoužívá se PyPI. Odpovídající zdroj je
-v samostatném release assetu edupage_api-0.13.4.dev2026111001.tar.gz.
+Pokud rozvrh zůstane nedostupný, pošli konkrétní nové řádky Timetable RPC,
+Failed to fetch timetable a případný auth signál s výsledkem ověření účtu.
+Nezapínej kvůli tomu plošný debug a neposílej cookies ani celé odpovědi API.
 
-OVĚŘENÍ PO INSTALACI
-Při dříve neúspěšném unload nejprve restartuj HA. U každé konfigurace dítěte
-obnov přihlášení přes Znovu ověřit / Překonfigurovat. Zkontroluj známky,
-rozvrh, přihlašování a konzultace. Nastavení a existující rezervace zachovej.
-Heslo ani session neposílej do protokolů nebo do komentářů na GitHubu.
-
-Fix rodičovské identity je ověřen syntetickými testy; jeho potvrzení na účtu,
-kde chyba vznikla, teprve proběhne. Skutečné rušení a otevřená přihlašovací
-akce/průzkum zůstávají živě neověřené. Pro zkoušky služeb používej dry_run:true.
-Tlačítka rezervace a rušení zapisují do EduPage.
+Nové chování má regresní testy; potvrzení na původním živém účtu teprve
+proběhne. Přesnou příčinu původního r=null samotný traceback neprokazuje.
+Skutečné rušení rezervace a otevřený průzkum zůstávají živě neověřené.
+Pro zkoušky služeb používej dry_run:true; tlačítka rezervace/rušení zapisují.

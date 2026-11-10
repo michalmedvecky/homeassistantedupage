@@ -5,7 +5,7 @@ For HACS, add `michalmedvecky/homeassistantedupage` as a custom integration repo
 and choose the published pre-release. Domain `homeassistantedupage` and config/entity
 identifiers are unchanged. Do not delete the child configuration entries.
 
-This release embeds edupage-api 0.13.4.dev2026111001 as a wheel. Its corresponding
+This release embeds edupage-api 0.13.4.dev2026111002 as a wheel. Its corresponding
 source archive is attached to the same GitHub release; PyPI is not used for this
 development dependency. All source changes are separately prepared for the original
 library and integration projects. Real booking/cancellation remains unverified;
@@ -815,6 +815,21 @@ and are never stored. Transient network errors remain retryable.
 Reconfigure validates the configured child before updating the session and account
 identity together. Reload waits for startup consultation work to restore its
 context before loading the replacement entry. Failed parent restoration preserves
-verified read results, quarantines further requests, and offers reauthentication;
-no reservation is automatically retried. The SDK prefers a server-issued parent
+verified read results, quarantines further requests;
+no reservation is automatically retried. Only a confirmed account authentication
+failure requests reauthentication; a context/module error does not. The SDK prefers a server-issued parent
 account row when available, including canonical identities behind login aliases.
+
+
+### Incomplete timetable data and module authentication signals
+
+Missing timetable RPC results are data errors. The integration makes at most one
+additional read in the verified configured child's context. A failed fallback
+marks timetable data stale and does not request a password or repeat any write.
+
+Registration pages may contain password dialogs while logged in. Such fields and
+login text in query strings are not authentication failures. When a module signals
+expiry, the integration verifies the main account page using current cookies.
+Authenticated or inconclusive responses remain source errors; only a confirmed
+login redirect/HTTP 401 marks the session expired. Diagnostics identify the
+operation and verification result without response bodies, credentials or hashes.
